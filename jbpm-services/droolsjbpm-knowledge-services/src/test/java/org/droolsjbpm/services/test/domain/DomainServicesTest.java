@@ -110,6 +110,8 @@ public class DomainServicesTest {
                 .addPackage("org.jbpm.runtime.manager.impl.task")
                 .addPackage("org.jbpm.runtime.manager.impl.tx")
                 
+                .addPackage("org.jbpm.runtime.manager.cdi")
+                
                 .addPackage("org.jbpm.shared.services.api")
                 .addPackage("org.jbpm.shared.services.impl")
                 
@@ -122,6 +124,7 @@ public class DomainServicesTest {
                 .addPackage("org.droolsjbpm.services.impl.util")
                 
                 .addPackage("org.droolsjbpm.services.impl.vfs")
+                
                 
                 .addPackage("org.droolsjbpm.services.impl.example")
                 .addPackage("org.kie.commons.java.nio.fs.jgit")
@@ -276,6 +279,8 @@ public class DomainServicesTest {
         domainService.storeOrganization(organization);
         
         domainService.initDomain(domain.getId());
+        
+        
         List<Runtime> runtimesByDomain = domainService.getRuntimesByDomain(domain.getName());
         Runtime runtime = runtimesByDomain.get(0);
         runtime.getKieSession().startProcess("support.process");

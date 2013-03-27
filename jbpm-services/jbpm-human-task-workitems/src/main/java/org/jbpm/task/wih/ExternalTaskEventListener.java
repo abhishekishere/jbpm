@@ -18,13 +18,11 @@ package org.jbpm.task.wih;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.enterprise.event.Reception;
 import org.jboss.seam.transaction.Transactional;
 
 import org.jbpm.shared.services.impl.events.JbpmServicesEventListener;
-import org.jbpm.task.annotations.External;
 import org.jbpm.task.events.AfterTaskCompletedEvent;
 import org.jbpm.task.events.AfterTaskFailedEvent;
 import org.jbpm.task.events.AfterTaskSkippedEvent;
@@ -33,6 +31,7 @@ import org.jbpm.task.utils.ContentMarshallerHelper;
 import org.kie.api.runtime.KieSession;
 import org.kie.internal.runtime.manager.Runtime;
 import org.kie.internal.runtime.manager.RuntimeManager;
+import org.kie.internal.runtime.manager.cdi.RuntimeManagerScoped;
 import org.kie.internal.runtime.manager.context.ProcessInstanceIdContext;
 import org.kie.internal.task.api.model.Content;
 import org.kie.internal.task.api.model.Status;
@@ -42,8 +41,8 @@ import org.kie.internal.task.api.model.Task;
  *
  * @author salaboy
  */
-@ApplicationScoped
-@External
+
+@RuntimeManagerScoped
 @Transactional
 public class ExternalTaskEventListener extends JbpmServicesEventListener<Task>  implements TaskLifeCycleEventListener {
 
@@ -51,6 +50,7 @@ public class ExternalTaskEventListener extends JbpmServicesEventListener<Task>  
     private Map<Integer, ClassLoader> classLoaders = new HashMap<Integer,ClassLoader>();
  
     public ExternalTaskEventListener() {
+        System.out.println(" >>>>.   LISTENER HASHCODEEE!!!! "+this.hashCode());
     }
     
     public void addClassLoader(Integer sessionId, ClassLoader cl) {

@@ -20,15 +20,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.ContextNotActiveException;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.context.spi.Context;
 import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.transaction.UserTransaction;
 import org.droolsjbpm.services.api.DomainManagerService;
 import org.droolsjbpm.services.api.bpmn2.BPMN2DataService;
 import org.droolsjbpm.services.domain.entities.Domain;
@@ -40,14 +42,14 @@ import org.jboss.seam.transaction.Transactional;
 import org.jbpm.process.audit.AbstractAuditLogger;
 import org.jbpm.process.audit.AuditLoggerFactory;
 import org.jbpm.process.audit.event.AuditEventBuilder;
+import org.jbpm.process.core.timer.impl.ThreadPoolSchedulerService;
+import org.jbpm.runtime.manager.impl.CDIRuntimeEnvironment;
 import org.jbpm.runtime.manager.impl.DefaultRuntimeEnvironment;
 import org.jbpm.runtime.manager.impl.SimpleRuntimeEnvironment;
 import org.jbpm.shared.services.api.FileException;
 import org.jbpm.shared.services.api.FileService;
 import org.jbpm.shared.services.api.JbpmServicesPersistenceManager;
-import org.jbpm.shared.services.impl.JbpmServicesPersistenceManagerImpl;
 import org.kie.api.io.ResourceType;
-import org.kie.api.runtime.EnvironmentName;
 import org.kie.commons.java.nio.file.Path;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.runtime.manager.Runtime;
@@ -83,6 +85,9 @@ public class DomainManagerServiceImpl implements DomainManagerService {
     
     @Inject
     private AuditEventBuilder auditEventBuilder;
+    
+    @Inject
+    private BeanManager beanManager;
 
     public void setPm(JbpmServicesPersistenceManager pm) {
         this.pm = pm;
@@ -163,7 +168,20 @@ public class DomainManagerServiceImpl implements DomainManagerService {
                 for (RuntimeId r : d.getRuntimes()) {
                     String reference = r.getReference();
                     // Create Runtime Manager Based on the Reference
-                    SimpleRuntimeEnvironment environment = new DefaultRuntimeEnvironment(emf);
+                    SimpleRuntimeEnvironment environment; 
+                    if(beanManager == null){
+                        environment = new DefaultRuntimeEnvironment(emf);
+                    } else{
+                        Context context = beanManager.getContext(Dependent.class);
+                        Set<Bean<?>> beans = beanManager.getBeans(CDIRuntimeEnvironment.class);
+                        Bean<CDIRuntimeEnvironment> bean = (Bean<CDIRuntimeEnvironment>) beanManager.resolve(beans);
+                        CreationalContext<CDIRuntimeEnvironment> creationalContext = beanManager.createCreationalContext(bean);
+                        environment = context.get(bean, creationalContext);
+                        ((CDIRuntimeEnvironment)environment).setEmf(emf);
+                        ((CDIRuntimeEnvironment)environment).setSchedulerService(new ThreadPoolSchedulerService(1));
+                        ((CDIRuntimeEnvironment)environment).init();
+                    }
+
                     
                     Iterable<Path> loadProcessFiles = null;
 
